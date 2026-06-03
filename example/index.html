@@ -505,9 +505,14 @@
 
     /* Results Dashboard Grid */
     .results-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
+    }
+
+    /* Stack on mobile frame */
+    .mobile-frame .results-grid {
+      grid-template-columns: 1fr;
     }
 
     .result-card {
@@ -563,11 +568,16 @@
 
     /* Target Waist Card styling */
     .waist-card {
-      border-left: 4px solid var(--color-normal);
-      background: rgba(16, 185, 129, 0.03);
+      grid-column: span 2;
+      border-left: 4px solid #a855f7;
+      background: rgba(168, 85, 247, 0.03);
     }
     .light-mode .waist-card {
-      background: rgba(5, 150, 105, 0.04);
+      background: rgba(168, 85, 247, 0.04);
+    }
+
+    .mobile-frame .waist-card {
+      grid-column: span 1;
     }
     
     /* Ideal Weight Card styling */
@@ -577,6 +587,15 @@
     }
     .light-mode .ideal-card {
       background: rgba(79, 70, 229, 0.04);
+    }
+
+    /* Ideal Asian Weight Card styling */
+    .ideal-asian-card {
+      border-left: 4px solid var(--color-normal);
+      background: rgba(16, 185, 129, 0.03);
+    }
+    .light-mode .ideal-asian-card {
+      background: rgba(5, 150, 105, 0.04);
     }
 
     /* Comparison Bar Visualizer */
@@ -809,6 +828,14 @@
         padding: 4px 6px !important;
       }
       
+      .results-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .waist-card {
+        grid-column: span 1 !important;
+      }
+
       .result-card {
         padding: 12px 16px !important;
       }
@@ -934,11 +961,18 @@
               
               <!-- Results Cards Grid -->
               <div class="results-grid">
-                <!-- Ideal Weight Card -->
+                <!-- Ideal Weight Global Card -->
                 <div class="result-card ideal-card">
-                  <span class="card-label" id="lbl_card_ideal">น้ำหนักในอุดมคติ (Ideal Body Weight)</span>
-                  <div id="val_card_ideal" class="card-value">66.0 <span>kg</span></div>
-                  <div class="card-footer-info" id="desc_card_ideal">คำนวณตามสูตร Devine Formula สำหรับส่วนสูงนี้</div>
+                  <span class="card-label" id="lbl_card_ideal_global">น้ำหนักอุดมคติเกณฑ์สากล (Global IBW)</span>
+                  <div id="val_card_ideal_global" class="card-value">66.0 <span>kg</span></div>
+                  <div class="card-footer-info" id="desc_card_ideal_global">คำนวณตามสูตร Devine Formula สำหรับส่วนสูงนี้</div>
+                </div>
+
+                <!-- Ideal Weight Asian Card -->
+                <div class="result-card ideal-asian-card">
+                  <span class="card-label" id="lbl_card_ideal_asian">น้ำหนักอุดมคติเกณฑ์เอเชีย (Asian IBW)</span>
+                  <div id="val_card_ideal_asian" class="card-value">59.8 <span>kg</span></div>
+                  <div class="card-footer-info" id="desc_card_ideal_asian">คำนวณตามค่ากึ่งกลางดัชนีมวลกายปกติสำหรับเอเชีย (BMI 20.7)</div>
                 </div>
 
                 <!-- Target Waist Card -->
@@ -1029,9 +1063,11 @@
         txt_male: "ชาย",
         txt_female: "หญิง",
         lbl_height: "ส่วนสูง",
-        lbl_card_ideal: "น้ำหนักในอุดมคติ (Ideal Body Weight)",
+        lbl_card_ideal_global: "น้ำหนักอุดมคติเกณฑ์สากล (Global IBW)",
+        lbl_card_ideal_asian: "น้ำหนักอุดมคติเกณฑ์เอเชีย (Asian IBW)",
         lbl_card_waist: "คำแนะนำรอบเอวที่เหมาะสม",
         desc_card_ideal: "คำนวณตามสูตร Devine Formula สำหรับส่วนสูงนี้",
+        desc_card_ideal_asian: "คำนวณตามค่ากึ่งกลางดัชนีมวลกายปกติสำหรับเอเชีย (BMI 20.7)",
         desc_card_waist: "รอบเอวที่ดีต่อสุขภาพไม่ควรเกินครึ่งหนึ่งของส่วนสูง",
         lbl_vis_asia: "ช่วงน้ำหนักแต่ละระดับ เกณฑ์เอเชีย (Asia)",
         lbl_vis_who: "ช่วงน้ำหนักแต่ละระดับ เกณฑ์สากล (WHO)",
@@ -1057,9 +1093,11 @@
         txt_male: "Male",
         txt_female: "Female",
         lbl_height: "Height",
-        lbl_card_ideal: "Ideal Body Weight (IBW)",
+        lbl_card_ideal_global: "Ideal Weight (Global IBW)",
+        lbl_card_ideal_asian: "Ideal Weight (Asian IBW)",
         lbl_card_waist: "Target Waist Circumference",
         desc_card_ideal: "Calculated via Devine Formula for this height",
+        desc_card_ideal_asian: "Calculated via healthy Asian BMI midpoint (BMI 20.7)",
         desc_card_waist: "Healthy waist should be less than half of height",
         lbl_vis_asia: "Weight Categories - Asian Criteria",
         lbl_vis_who: "Weight Categories - WHO Criteria",
@@ -1149,7 +1187,8 @@
       document.getElementById('txt_male').innerText = dict.txt_male;
       document.getElementById('txt_female').innerText = dict.txt_female;
       document.getElementById('lbl_height').innerText = dict.lbl_height;
-      document.getElementById('lbl_card_ideal').innerText = dict.lbl_card_ideal;
+      document.getElementById('lbl_card_ideal_global').innerText = dict.lbl_card_ideal_global;
+      document.getElementById('lbl_card_ideal_asian').innerText = dict.lbl_card_ideal_asian;
       document.getElementById('lbl_card_waist').innerText = dict.lbl_card_waist;
       document.getElementById('desc_card_waist').innerText = dict.desc_card_waist;
       
@@ -1251,8 +1290,14 @@
       }
       
       const ibwDisplay = convertWeight(ibwKg);
-      document.getElementById('val_card_ideal').innerHTML = `${ibwDisplay.toFixed(1)} <span>${currentUnitLabel}</span>`;
-      document.getElementById('desc_card_ideal').innerText = isEdgeCase ? dict.desc_ibw_edge : dict.desc_card_ideal;
+      document.getElementById('val_card_ideal_global').innerHTML = `${ibwDisplay.toFixed(1)} <span>${currentUnitLabel}</span>`;
+      document.getElementById('desc_card_ideal_global').innerText = isEdgeCase ? dict.desc_ibw_edge : dict.desc_card_ideal;
+
+      // 1.1 Asian Ideal Body Weight (BMI = 20.7 midpoint)
+      const asianIbwKg = 20.7 * heightSquared;
+      const asianIbwDisplay = convertWeight(asianIbwKg);
+      document.getElementById('val_card_ideal_asian').innerHTML = `${asianIbwDisplay.toFixed(1)} <span>${currentUnitLabel}</span>`;
+      document.getElementById('desc_card_ideal_asian').innerText = dict.desc_card_ideal_asian;
 
       // 2. Recommended Waist Circumference calculation
       const maxWaistLimit = state.gender === 'male' ? 90 : 80;
