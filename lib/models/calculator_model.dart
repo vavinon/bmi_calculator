@@ -50,7 +50,7 @@ class CalculatorModel {
     final double asianMinWeight = 18.5 * heightSquared;
     final double asianMaxWeight = 22.9 * heightSquared;
 
-    // คำนวณน้ำหนักตัวในอุดมคติของชาวเอเชีย (กึ่งกลางช่วงปกติเอเชีย BMI = 20.7)
+    // คำนวณน้ำหนักตัวในอุดมคติของชาวเอเชีย (อิงค่ากึ่งกลางช่วงปกติเอเชีย BMI = 20.7)
     final double asianIdealBodyWeight = 20.7 * heightSquared;
 
     return CalculatorResult(
