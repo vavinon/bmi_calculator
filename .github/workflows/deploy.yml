@@ -1,0 +1,38 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # ดำเนินการเมื่อมีโค้ดใหม่ดันขึ้นบรานช์หลัก (เช่น main หรือ master)
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. ดึงโค้ดโปรเจกต์ลงเครื่องเซิร์ฟเวอร์จำลองของ GitHub
+      - uses: actions/checkout@v4
+
+      # 2. ติดตั้งสภาพแวดล้อม Flutter SDK
+      - name: Install Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # 3. ดาวน์โหลดแพ็กเกจย่อยที่จำเป็น
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 4. คอมไพล์โปรเจกต์ให้ออกมาเป็นโค้ดเว็บเวอร์ชันใช้งานจริง
+      # หมายเหตุ: ใช้ชื่อ repository ของคุณมาเป็น base-href ป้องกันหน้าเว็บแสดงผลขาวว่าง
+      - name: Build Flutter Web
+        run: flutter build web --base-href "/${{ github.event.repository.name }}/"
+
+      # 5. สั่งอัปโหลดไฟล์ผลลัพธ์ใน build/web ไปขึ้นบรานช์ gh-pages เพื่อทำโฮสติ้ง
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/web
+          branch: gh-pages

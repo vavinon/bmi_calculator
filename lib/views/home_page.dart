@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../core/localization.dart';
+import '../models/calculator_result.dart';
 import '../viewmodels/calculator_viewmodel.dart';
 import 'widgets/gender_selector.dart';
 import 'widgets/height_slider.dart';
@@ -30,20 +31,6 @@ class HomePage extends StatelessWidget {
     final double idealWeightDisplay = viewModel.weightUnit == 'lbs'
         ? result.idealBodyWeight * 2.20462
         : result.idealBodyWeight;
-
-    // ตัวแปรช่วงน้ำหนักสำหรับเกณฑ์เอเชีย (แปลงตามหน่วยที่เลือก)
-    final double scale = viewModel.weightUnit == 'lbs' ? 2.20462 : 1.0;
-    final double asiaUnderLimit = result.asianMinWeight * scale;
-    final double asiaNormalLimit = result.asianMaxWeight * scale;
-    final double asiaOverLimit = (result.asianMaxWeight + 2.0) * scale; // 24.9 * H^2
-    final double asiaObeseLimit = result.asianMaxWeight * scale; // >= 25.0 * H^2 (obese lower limit)
-    // สำหรับเอเชีย ขีดจำกัดล่างอ้วนคือ 25.0 * H^2 จากสเปก
-
-    // ตัวแปรช่วงน้ำหนักสำหรับเกณฑ์สากล (WHO) (แปลงตามหน่วยที่เลือก)
-    final double whoUnderLimit = result.whoMinWeight * scale;
-    final double whoNormalLimit = result.whoMaxWeight * scale;
-    final double whoOverLimit = (result.whoMaxWeight + 5.0) * scale; // 29.9 * H^2
-    final double whoObeseLimit = result.whoMaxWeight * scale; // >= 30.0 * H^2
 
     return Scaffold(
       backgroundColor: Colors.transparent, // เพื่อแสดงเฉดสีพื้นหลังแบบไล่สี
@@ -122,14 +109,6 @@ class HomePage extends StatelessWidget {
                                   idealWeightDisplay,
                                   currentWeightUnit,
                                   result,
-                                  asiaUnderLimit,
-                                  result.asianMinWeight * scale,
-                                  result.asianMaxWeight * scale,
-                                  (result.asianMaxWeight + 2.0) * scale,
-                                  whoUnderLimit,
-                                  result.whoMinWeight * scale,
-                                  result.whoMaxWeight * scale,
-                                  (result.whoMaxWeight + 5.0) * scale,
                                 ),
                               ),
                             ],
@@ -149,14 +128,6 @@ class HomePage extends StatelessWidget {
                                 idealWeightDisplay,
                                 currentWeightUnit,
                                 result,
-                                asiaUnderLimit,
-                                result.asianMinWeight * scale,
-                                result.asianMaxWeight * scale,
-                                (result.asianMaxWeight + 2.0) * scale,
-                                whoUnderLimit,
-                                result.whoMinWeight * scale,
-                                result.whoMaxWeight * scale,
-                                (result.whoMaxWeight + 5.0) * scale,
                               ),
                             ],
                           ),
@@ -465,17 +436,26 @@ class HomePage extends StatelessWidget {
     AppLocalizations localizations,
     double idealWeightVal,
     String weightUnitStr,
-    dynamic result,
-    double asiaUnder,
-    double asiaMin,
-    double asiaMax,
-    double asiaOver,
-    double whoUnder,
-    double whoMin,
-    double whoMax,
-    double whoOver,
+    CalculatorResult result,
   ) {
     final double scale = viewModel.weightUnit == 'lbs' ? 2.20462 : 1.0;
+    final double heightInMeters = viewModel.height / 100.0;
+    final double heightSquared = heightInMeters * heightInMeters;
+
+    // เกณฑ์เอเชีย (Asian Criteria)
+    final double w18_5_asia = result.asianMinWeight * scale;
+    final double w22_9_asia = result.asianMaxWeight * scale;
+    final double w23_0_asia = 23.0 * heightSquared * scale;
+    final double w24_9_asia = 24.9 * heightSquared * scale;
+    final double w25_0_asia = 25.0 * heightSquared * scale;
+
+    // เกณฑ์สากล (WHO Criteria)
+    final double w18_5_who = result.whoMinWeight * scale;
+    final double w24_9_who = result.whoMaxWeight * scale;
+    final double w25_0_who = 25.0 * heightSquared * scale;
+    final double w29_9_who = 29.9 * heightSquared * scale;
+    final double w30_0_who = 30.0 * heightSquared * scale;
+
     // คำนวณขีดจำกัดสูงสุดรอบเอวในหน่วยนิ้ว
     final double recommendedWaistInches = result.recommendedWaistInches;
     final String lessThanStr = localizations.translate('less_than');
@@ -615,11 +595,11 @@ class HomePage extends StatelessWidget {
               // เกณฑ์เอเชีย
               SegmentedRangeBar(
                 title: localizations.translate('asian_criteria'),
-                w18_5: asiaMin,
-                wNormalMax: asiaMax,
-                wOverweightMin: (result.asianMaxWeight + 0.1) * scale,
-                wOverweightMax: (result.overweightMaxWeight ?? (result.asianMaxWeight + 2.0)) * scale,
-                wObeseMin: (result.asianMaxWeight + 2.1) * scale, // >= 25.0
+                w18_5: w18_5_asia,
+                wNormalMax: w22_9_asia,
+                wOverweightMin: w23_0_asia,
+                wOverweightMax: w24_9_asia,
+                wObeseMin: w25_0_asia,
                 weightUnitLabel: weightUnitStr,
                 theme: theme,
                 localizations: localizations,
@@ -629,11 +609,11 @@ class HomePage extends StatelessWidget {
               // เกณฑ์สากล (WHO)
               SegmentedRangeBar(
                 title: localizations.translate('who_criteria'),
-                w18_5: whoMin,
-                wNormalMax: whoMax,
-                wOverweightMin: (result.whoMaxWeight + 0.1) * scale,
-                wOverweightMax: (result.whoMaxWeight + 5.0) * scale, // 29.9
-                wObeseMin: (result.whoMaxWeight + 5.1) * scale, // >= 30.0
+                w18_5: w18_5_who,
+                wNormalMax: w24_9_who,
+                wOverweightMin: w25_0_who,
+                wOverweightMax: w29_9_who,
+                wObeseMin: w30_0_who,
                 weightUnitLabel: weightUnitStr,
                 theme: theme,
                 localizations: localizations,
