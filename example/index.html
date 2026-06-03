@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ideal Weight Finder - Device Simulator</title>
+  <!-- Google Fonts: Outfit for English, Sarabun for Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Theme Variables (Dark Mode default) */
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --panel-bg: rgba(30, 41, 59, 0.45);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      
+      --accent-color: #6366f1; /* Indigo */
+      --accent-gradient: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);
+      
+      /* Status Colors */
+      --color-underweight: #38bdf8; /* Sky blue */
+      --color-normal: #10b981;      /* Emerald green */
+      --color-overweight: #f59e0b;  /* Amber */
+      --color-obese: #ef4444;       /* Red */
+
+      /* Structural opacity */
+      --glow-opacity: 0.12;
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-border: rgba(255, 255, 255, 0.04);
+      --slider-track: rgba(255, 255, 255, 0.08);
+      --switcher-bg: rgba(255, 255, 255, 0.05);
+      --switcher-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Light Mode Overrides */
+    :root.light-mode {
+      --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+      --panel-bg: rgba(255, 255, 255, 0.55);
+      --panel-border: rgba(15, 23, 42, 0.08);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      
+      --accent-color: #4f46e5;
+      --accent-gradient: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+      
+      --color-underweight: #0284c7;
+      --color-normal: #059669;
+      --color-overweight: #d97706;
+      --color-obese: #dc2626;
+
+      --glow-opacity: 0.06;
+      --card-bg: rgba(15, 23, 42, 0.03);
+      --card-border: rgba(15, 23, 42, 0.06);
+      --slider-track: rgba(15, 23, 42, 0.08);
+      --switcher-bg: rgba(15, 23, 42, 0.05);
+      --switcher-border: rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Simulator Workspace Layout */
+    body {
+      font-family: 'Outfit', 'Sarabun', sans-serif;
+      background: #0b0f19;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Top Simulator Controller Bar */
+    .sim-bar {
+      width: 100%;
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .sim-logo {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-logo span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 0.75rem;
+      border: 1px solid #6366f1;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .sim-controls {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .sim-btn {
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .sim-btn:hover {
+      color: #fff;
+    }
+
+    .sim-btn.active {
+      background: #374151;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Outer Wrapper simulating device display frame */
+    .device-viewport-wrapper {
+      flex-grow: 1;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #09090b 100%);
+      transition: padding 0.5s ease;
+    }
+
+    /* CSS Phone Device Frame Shell */
+    .device-shell {
+      width: 100%;
+      max-width: 950px;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* When switched to mobile mode */
+    .device-shell.mobile-frame {
+      width: 375px;
+      height: 780px;
+      border: 12px solid #27272a;
+      border-radius: 45px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8);
+      background: var(--bg-gradient);
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      scrollbar-width: none; /* Hide scrollbar for Firefox */
+    }
+
+    .device-shell.mobile-frame::-webkit-scrollbar {
+      display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+
+    /* Dynamic internal viewport inside phone mockup */
+    .viewport {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+    }
+
+    .device-shell.mobile-frame .viewport {
+      align-items: flex-start;
+      padding: 0px 4px;
+    }
+
+    /* Core App CSS embedded inside the viewport container */
+    .app-container {
+      width: 100%;
+      max-width: 100%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.5s ease, border-color 0.5s ease, border-radius 0.5s ease;
+    }
+
+    .device-shell.mobile-frame .app-container {
+      border: none;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      padding: 20px 16px;
+      border-radius: 0;
+    }
+
+    /* Background decoration adjustments */
+    .app-container::before {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: var(--accent-color);
+      opacity: var(--glow-opacity);
+      filter: blur(80px);
+      border-radius: 50%;
+      top: -150px;
+      left: -150px;
+      pointer-events: none;
+      transition: background 0.5s ease, opacity 0.5s ease;
+    }
+    .app-container::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: #a855f7;
+      opacity: var(--glow-opacity);
+      filter: blur(80px);
+      border-radius: 50%;
+      bottom: -150px;
+      right: -150px;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Header Styling */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 16px;
+    }
+    .light-mode header {
+      border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.4;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Controls Group in Header */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toggle-group-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .toggle-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .custom-switcher {
+      display: flex;
+      background: var(--switcher-bg);
+      border: 1px solid var(--switcher-border);
+      border-radius: 12px;
+      padding: 3px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .switcher-btn {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .switcher-btn.active {
+      background: var(--accent-color);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Layout Responsive Grid */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 32px;
+      position: relative;
+      z-index: 10;
+      transition: grid-template-columns 0.5s ease;
+    }
+
+    /* Force mobile stacked layout when in mobile simulator frame */
+    .mobile-frame .layout-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    /* Card Panels */
+    .control-panel, .display-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Gender Toggle CSS */
+    .gender-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .gender-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gender-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+    }
+
+    .gender-btn.active {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.1) inset;
+    }
+    
+    .light-mode .gender-btn.active {
+      background: rgba(79, 70, 229, 0.08);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    /* Slider styling */
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .slider-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Numeric Input field style */
+    .num-input {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--accent-color);
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      width: 90px;
+      text-align: center;
+      outline: none;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .num-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .num-input::-webkit-outer-spin-button,
+    .num-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .num-input {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    /* Input validation error styling */
+    .num-input.error {
+      border-color: var(--color-obese);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+      color: var(--color-obese);
+    }
+
+    .error-message {
+      font-size: 0.78rem;
+      color: var(--color-obese);
+      margin-top: 4px;
+      display: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .slider-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: var(--slider-track);
+      border-radius: 4px;
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+      border: 4px solid var(--accent-color);
+      transition: transform 0.1s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Results Dashboard Grid */
+    .results-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .result-card:hover {
+      border-color: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+    .light-mode .result-card:hover {
+      border-color: rgba(15, 23, 42, 0.12);
+    }
+
+    .card-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .card-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 8px;
+      color: var(--text-primary);
+    }
+
+    .card-value span {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-left: 2px;
+      font-weight: 400;
+    }
+
+    .card-footer-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+    }
+    .light-mode .card-footer-info {
+      border-top: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    /* Target Waist Card styling */
+    .waist-card {
+      border-left: 4px solid var(--color-normal);
+      background: rgba(16, 185, 129, 0.03);
+    }
+    .light-mode .waist-card {
+      background: rgba(5, 150, 105, 0.04);
+    }
+    
+    /* Ideal Weight Card styling */
+    .ideal-card {
+      border-left: 4px solid var(--accent-color);
+      background: rgba(99, 102, 241, 0.03);
+    }
+    .light-mode .ideal-card {
+      background: rgba(79, 70, 229, 0.04);
+    }
+
+    /* Comparison Bar Visualizer */
+    .visualizer-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .range-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .range-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .range-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Weight Segment visualizer */
+    .bar-wrapper {
+      position: relative;
+      height: 38px;
+      background: var(--slider-track);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--card-border);
+    }
+
+    .bar-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dark Mode specific colors for segments (high opacity on dark, low contrast text) */
+    .seg-under {
+      background: rgba(56, 189, 248, 0.22);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
+    .seg-normal {
+      background: rgba(16, 185, 129, 0.30);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
+    .seg-over {
+      background: rgba(245, 158, 11, 0.25);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
+    .seg-obese {
+      background: rgba(239, 68, 68, 0.25);
+      color: #f8fafc;
+    }
+
+    /* Light Mode specific solid colors for segments (for high contrast readability) */
+    .light-mode .seg-under {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-right: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .light-mode .seg-normal {
+      background: #d1fae5;
+      color: #065f46;
+      border-right: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .light-mode .seg-over {
+      background: #fef3c7;
+      color: #92400e;
+      border-right: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .light-mode .seg-obese {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .segment-val {
+      font-size: 0.8rem;
+    }
+    
+    /* Legend styling */
+    .legend-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      padding: 0 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 12px;
+    }
+    .light-mode .legend-row {
+      border-top: 1px solid rgba(15, 23, 42, 0.05);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ==========================================
+       Specific styles when inside .mobile-frame
+       ========================================== */
+    .mobile-frame header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 16px !important;
+    }
+    
+    .mobile-frame h1 {
+      font-size: 1.25rem !important;
+      width: 100%;
+    }
+
+    .mobile-frame .header-controls {
+      width: 100%;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+      flex-wrap: nowrap !important; /* Forces row layout for controls inside phone viewport */
+    }
+
+    .mobile-frame .toggle-group-wrapper {
+      align-items: flex-start !important;
+    }
+
+    .mobile-frame .switcher-btn {
+      padding: 5px 8px !important;
+      font-size: 0.72rem !important;
+    }
+    
+    .mobile-frame .bar-segment {
+      font-size: 0.68rem !important; /* Fits weight values inside narrow mobile segments */
+    }
+
+    .mobile-frame .segment-val {
+      font-size: 0.7rem !important;
+    }
+    
+    .mobile-frame .num-input {
+      width: 76px !important;
+      font-size: 1.1rem !important;
+      padding: 4px 6px !important;
+    }
+    
+    .mobile-frame .result-card {
+      padding: 12px 16px !important;
+    }
+    
+    .mobile-frame .card-value {
+      font-size: 1.7rem !important;
+    }
+
+    .mobile-frame .app-container {
+      padding: 16px 12px !important;
+    }
+    
+    .mobile-frame .legend-row {
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+      gap: 10px 16px !important;
+    }
+
+    /* ==========================================
+       Actual Mobile Device Media Queries
+       ========================================== */
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+      }
+      
+      h1 {
+        font-size: 1.25rem !important;
+        width: 100%;
+      }
+
+      .header-controls {
+        width: 100%;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+      }
+
+      .toggle-group-wrapper {
+        align-items: flex-start !important;
+      }
+
+      .switcher-btn {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+      }
+      
+      .bar-segment {
+        font-size: 0.68rem !important;
+      }
+
+      .segment-val {
+        font-size: 0.7rem !important;
+      }
+      
+      .num-input {
+        width: 76px !important;
+        font-size: 1.1rem !important;
+        padding: 4px 6px !important;
+      }
+      
+      .result-card {
+        padding: 12px 16px !important;
+      }
+      
+      .card-value {
+        font-size: 1.7rem !important;
+      }
+
+      .app-container {
+        padding: 16px 12px !important;
+      }
+      
+      .legend-row {
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 10px 16px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Simulator Top Bar -->
+  <div class="sim-bar">
+    <div class="sim-logo">
+      Ideal Weight Finder <span>PROTOTYPE SIMULATOR</span>
+    </div>
+    
+    <!-- Mode Switchers (Desktop / Mobile) -->
+    <div class="sim-controls">
+      <button id="sim_desktop" class="sim-btn active" onclick="switchSimMode('desktop')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Desktop Layout
+      </button>
+      <button id="sim_mobile" class="sim-btn" onclick="switchSimMode('mobile')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        Mobile Layout
+      </button>
+    </div>
+  </div>
+
+  <!-- Device Display Workspace -->
+  <div class="device-viewport-wrapper">
+    <div id="device_shell" class="device-shell">
+      <div class="viewport">
+        
+        <!-- Core App Container -->
+        <div class="app-container">
+          <header>
+            <h1 id="title_app">เครื่องมือคำนวณน้ำหนักที่เหมาะสม</h1>
+            
+            <div class="header-controls">
+              <!-- Theme Switcher -->
+              <div class="toggle-group-wrapper">
+                <span class="toggle-label" id="lbl_toggle_theme">ธีม / THEME</span>
+                <div class="custom-switcher">
+                  <button id="theme_dark" class="switcher-btn active" onclick="setTheme('dark')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  </button>
+                  <button id="theme_light" class="switcher-btn" onclick="setTheme('light')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Weight Unit Toggle -->
+              <div class="toggle-group-wrapper">
+                <span class="toggle-label" id="lbl_toggle_unit">หน่วยน้ำหนัก</span>
+                <div class="custom-switcher">
+                  <button id="unit_kg" class="switcher-btn active" onclick="setWeightUnit('kg')">kg</button>
+                  <button id="unit_lbs" class="switcher-btn" onclick="setWeightUnit('lbs')">lbs</button>
+                </div>
+              </div>
+
+              <!-- Language Toggle -->
+              <div class="toggle-group-wrapper">
+                <span class="toggle-label" id="lbl_toggle_lang">ภาษา / LANG</span>
+                <div class="custom-switcher">
+                  <button id="lang_th" class="switcher-btn active" onclick="setLanguage('th')">TH</button>
+                  <button id="lang_en" class="switcher-btn" onclick="setLanguage('en')">EN</button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div class="layout-grid">
+            <!-- Input Controls Section -->
+            <div class="control-panel">
+              <h2 class="section-title" id="title_input">ข้อมูลส่วนตัว / PERSONAL INFO</h2>
+              
+              <!-- Gender Select -->
+              <div class="form-group">
+                <label class="slider-title" id="lbl_gender">เพศ</label>
+                <div class="gender-selector">
+                  <button id="btn_male" class="gender-btn active" onclick="setGender('male')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.25 3H21v6.75M21 3l-7.5 7.5M10.5 21a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z"/></svg>
+                    <span id="txt_male">ชาย</span>
+                  </button>
+                  <button id="btn_female" class="gender-btn" onclick="setGender('female')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 14v8M9 18h6"/></svg>
+                    <span id="txt_female">หญิง</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Height Input & Slider Group -->
+              <div class="form-group">
+                <div class="slider-header">
+                  <span class="slider-title" id="lbl_height">ส่วนสูง</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" id="input_height_txt" class="num-input" value="170" min="100" max="250" oninput="onHeightTextInput(this.value)">
+                    <span style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 500; flex-shrink: 0; font-family: sans-serif; display: inline-block; min-width: 30px; text-align: left;">cm</span>
+                  </div>
+                </div>
+                <input type="range" id="input_height" class="slider-input" min="100" max="250" value="170" oninput="onHeightSliderInput(this.value)">
+                <div id="height_error" class="error-message">กรุณากรอกส่วนสูงระหว่าง 100 - 250 ซม.</div>
+              </div>
+            </div>
+
+            <!-- Output Results Section -->
+            <div class="display-panel">
+              <h2 class="section-title" id="title_result">ผลวิเคราะห์ / ANALYSIS RESULTS</h2>
+              
+              <!-- Results Cards Grid -->
+              <div class="results-grid">
+                <!-- Ideal Weight Card -->
+                <div class="result-card ideal-card">
+                  <span class="card-label" id="lbl_card_ideal">น้ำหนักในอุดมคติ (Ideal Body Weight)</span>
+                  <div id="val_card_ideal" class="card-value">66.0 <span>kg</span></div>
+                  <div class="card-footer-info" id="desc_card_ideal">คำนวณตามสูตร Devine Formula สำหรับส่วนสูงนี้</div>
+                </div>
+
+                <!-- Target Waist Card -->
+                <div class="result-card waist-card">
+                  <span class="card-label" id="lbl_card_waist">คำแนะนำรอบเอวที่เหมาะสม</span>
+                  <div id="val_card_waist" class="card-value">ไม่เกิน 85 <span>cm</span> <span>(33.5 นิ้ว)</span></div>
+                  <div class="card-footer-info" id="desc_card_waist">รอบเอวที่ดีต่อสุขภาพไม่ควรเกินครึ่งหนึ่งของส่วนสูง</div>
+                </div>
+              </div>
+
+              <!-- Range Bars Visualizer -->
+              <div class="visualizer-section">
+                <!-- Asian Criteria Bar -->
+                <div class="range-bar-container">
+                  <div class="range-title-row">
+                    <span class="range-title" id="lbl_vis_asia">ช่วงน้ำหนักแต่ละระดับ เกณฑ์เอเชีย (Asia)</span>
+                  </div>
+                  <div class="bar-wrapper">
+                    <div id="asia_under" class="bar-segment seg-under">
+                      <span id="val_asia_under" class="segment-val">&lt; 53.5</span>
+                    </div>
+                    <div id="asia_normal" class="bar-segment seg-normal">
+                      <span id="val_asia_normal" class="segment-val">53.5-66.2</span>
+                    </div>
+                    <div id="asia_over" class="bar-segment seg-over">
+                      <span id="val_asia_over" class="segment-val">66.3-72.0</span>
+                    </div>
+                    <div id="asia_obese" class="bar-segment seg-obese">
+                      <span id="val_asia_obese" class="segment-val">&ge; 72.0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WHO Criteria Bar -->
+                <div class="range-bar-container">
+                  <div class="range-title-row">
+                    <span class="range-title" id="lbl_vis_who">ช่วงน้ำหนักแต่ละระดับ เกณฑ์สากล (WHO)</span>
+                  </div>
+                  <div class="bar-wrapper">
+                    <div id="who_under" class="bar-segment seg-under">
+                      <span id="val_who_under" class="segment-val">&lt; 53.5</span>
+                    </div>
+                    <div id="who_normal" class="bar-segment seg-normal">
+                      <span id="val_who_normal" class="segment-val">53.5-72.0</span>
+                    </div>
+                    <div id="who_over" class="bar-segment seg-over">
+                      <span id="val_who_over" class="segment-val">72.1-86.7</span>
+                    </div>
+                    <div id="who_obese" class="bar-segment seg-obese">
+                      <span id="val_who_obese" class="segment-val">&ge; 86.7</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Legend -->
+                <div class="legend-row">
+                  <div class="legend-item"><span class="legend-dot" style="background: var(--color-underweight)"></span><span id="lg_under">ต่ำกว่าเกณฑ์</span></div>
+                  <div class="legend-item"><span class="legend-dot" style="background: var(--color-normal)"></span><span id="lg_normal">ปกติ (เหมาะสมที่สุด)</span></div>
+                  <div class="legend-item"><span class="legend-dot" style="background: var(--color-overweight)"></span><span id="lg_over">น้ำหนักเกิน</span></div>
+                  <div class="legend-item"><span class="legend-dot" style="background: var(--color-obese)"></span><span id="lg_obese">ภาวะโรคอ้วน</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    const state = {
+      language: 'th',
+      gender: 'male',
+      height: 170,
+      weightUnit: 'kg', // 'kg' or 'lbs'
+      theme: 'dark' // 'dark' or 'light'
+    };
+
+    // Dictionary mappings
+    const translations = {
+      th: {
+        app_title: "เครื่องมือคำนวณน้ำหนักที่เหมาะสม",
+        title_input: "ข้อมูลส่วนตัว",
+        title_result: "ผลวิเคราะห์",
+        lbl_gender: "เพศ",
+        txt_male: "ชาย",
+        txt_female: "หญิง",
+        lbl_height: "ส่วนสูง",
+        lbl_card_ideal: "น้ำหนักในอุดมคติ (Ideal Body Weight)",
+        lbl_card_waist: "คำแนะนำรอบเอวที่เหมาะสม",
+        desc_card_ideal: "คำนวณตามสูตร Devine Formula สำหรับส่วนสูงนี้",
+        desc_card_waist: "รอบเอวที่ดีต่อสุขภาพไม่ควรเกินครึ่งหนึ่งของส่วนสูง",
+        lbl_vis_asia: "ช่วงน้ำหนักแต่ละระดับ เกณฑ์เอเชีย (Asia)",
+        lbl_vis_who: "ช่วงน้ำหนักแต่ละระดับ เกณฑ์สากล (WHO)",
+        lg_under: "ต่ำกว่าเกณฑ์",
+        lg_normal: "ปกติ (เหมาะสมที่สุด)",
+        lg_over: "น้ำหนักเกิน",
+        lg_obese: "ภาวะโรคอ้วน",
+        txt_not_exceed: "ไม่เกิน",
+        txt_inches: "นิ้ว",
+        desc_ibw_edge: "คงที่ค่าฐานส่วนสูงต่ำกว่าเกณฑ์ 5 ฟุต",
+        err_invalid_height: "กรุณากรอกส่วนสูงระหว่าง 100 - 250 ซม.",
+        lbl_toggle_unit: "หน่วยน้ำหนัก",
+        lbl_toggle_lang: "ภาษา",
+        lbl_toggle_theme: "ธีม",
+        kg: "กก.",
+        lbs: "ปอนด์"
+      },
+      en: {
+        app_title: "Ideal Weight Finder",
+        title_input: "Personal Info",
+        title_result: "Analysis Results",
+        lbl_gender: "Gender",
+        txt_male: "Male",
+        txt_female: "Female",
+        lbl_height: "Height",
+        lbl_card_ideal: "Ideal Body Weight (IBW)",
+        lbl_card_waist: "Target Waist Circumference",
+        desc_card_ideal: "Calculated via Devine Formula for this height",
+        desc_card_waist: "Healthy waist should be less than half of height",
+        lbl_vis_asia: "Weight Categories - Asian Criteria",
+        lbl_vis_who: "Weight Categories - WHO Criteria",
+        lg_under: "Underweight",
+        lg_normal: "Normal (Optimal)",
+        lg_over: "Overweight",
+        lg_obese: "Obesity",
+        txt_not_exceed: "Less than",
+        txt_inches: "inches",
+        desc_ibw_edge: "Capped at base weight (< 5 ft)",
+        err_invalid_height: "Please enter height between 100 - 250 cm.",
+        lbl_toggle_unit: "Weight Unit",
+        lbl_toggle_lang: "Language",
+        lbl_toggle_theme: "Theme",
+        kg: "kg",
+        lbs: "lbs"
+      }
+    };
+
+    // Initialize application UI
+    function init() {
+      updateLanguageUI();
+      calculateAndRender();
+    }
+
+    // Switch simulator preview modes (Desktop / Mobile shell)
+    function switchSimMode(mode) {
+      const shell = document.getElementById('device_shell');
+      document.getElementById('sim_desktop').classList.toggle('active', mode === 'desktop');
+      document.getElementById('sim_mobile').classList.toggle('active', mode === 'mobile');
+      
+      if (mode === 'mobile') {
+        shell.classList.add('mobile-frame');
+      } else {
+        shell.classList.remove('mobile-frame');
+      }
+      calculateAndRender(); // Re-render to adapt to new layout sizing rules
+    }
+
+    // Set active language TH/EN
+    function setLanguage(lang) {
+      state.language = lang;
+      
+      // Update UI active buttons
+      document.getElementById('lang_th').classList.toggle('active', lang === 'th');
+      document.getElementById('lang_en').classList.toggle('active', lang === 'en');
+      
+      updateLanguageUI();
+      // Retrigger error status to update its language
+      const txtInputVal = document.getElementById('input_height_txt').value;
+      onHeightTextInput(txtInputVal);
+    }
+
+    // Set active weight unit (kg/lbs)
+    function setWeightUnit(unit) {
+      state.weightUnit = unit;
+      
+      // Update UI active buttons
+      document.getElementById('unit_kg').classList.toggle('active', unit === 'kg');
+      document.getElementById('unit_lbs').classList.toggle('active', unit === 'lbs');
+      
+      calculateAndRender();
+    }
+
+    // Set active theme (dark/light)
+    function setTheme(theme) {
+      state.theme = theme;
+      
+      // Update UI active buttons
+      document.getElementById('theme_dark').classList.toggle('active', theme === 'dark');
+      document.getElementById('theme_light').classList.toggle('active', theme === 'light');
+      
+      // Toggle body class
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-mode');
+      } else {
+        document.documentElement.classList.remove('light-mode');
+      }
+    }
+
+    function updateLanguageUI() {
+      const dict = translations[state.language];
+      document.getElementById('title_app').innerText = dict.app_title;
+      document.getElementById('title_input').innerText = state.language === 'th' ? "ข้อมูลส่วนตัว / PERSONAL INFO" : "Personal Info";
+      document.getElementById('title_result').innerText = state.language === 'th' ? "ผลวิเคราะห์ / ANALYSIS RESULTS" : "Analysis Results";
+      document.getElementById('lbl_gender').innerText = dict.lbl_gender;
+      document.getElementById('txt_male').innerText = dict.txt_male;
+      document.getElementById('txt_female').innerText = dict.txt_female;
+      document.getElementById('lbl_height').innerText = dict.lbl_height;
+      document.getElementById('lbl_card_ideal').innerText = dict.lbl_card_ideal;
+      document.getElementById('lbl_card_waist').innerText = dict.lbl_card_waist;
+      document.getElementById('desc_card_waist').innerText = dict.desc_card_waist;
+      
+      document.getElementById('lbl_toggle_unit').innerText = dict.lbl_toggle_unit;
+      document.getElementById('lbl_toggle_lang').innerText = dict.lbl_toggle_lang;
+      document.getElementById('lbl_toggle_theme').innerText = dict.lbl_toggle_theme;
+      
+      document.getElementById('lg_under').innerText = dict.lg_under;
+      document.getElementById('lg_normal').innerText = dict.lg_normal;
+      document.getElementById('lg_over').innerText = dict.lg_over;
+      document.getElementById('lg_obese').innerText = dict.lg_obese;
+    }
+
+    function setGender(gender) {
+      state.gender = gender;
+      document.getElementById('btn_male').classList.toggle('active', gender === 'male');
+      document.getElementById('btn_female').classList.toggle('active', gender === 'female');
+      calculateAndRender();
+    }
+
+    // Handles synchronization
+    function onHeightSliderInput(value) {
+      state.height = parseInt(value);
+      document.getElementById('input_height_txt').value = value;
+      clearError();
+      calculateAndRender();
+    }
+
+    function onHeightTextInput(value) {
+      if (value === "") {
+        showError(true);
+        return;
+      }
+      
+      const parsed = parseInt(value);
+      if (isNaN(parsed) || parsed < 100 || parsed > 250) {
+        showError(true);
+        return;
+      }
+
+      showError(false);
+      state.height = parsed;
+      document.getElementById('input_height').value = parsed;
+      calculateAndRender();
+    }
+
+    function showError(isError) {
+      const txtInput = document.getElementById('input_height_txt');
+      const errDiv = document.getElementById('height_error');
+      const dict = translations[state.language];
+      
+      if (isError) {
+        txtInput.classList.add('error');
+        errDiv.innerText = dict.err_invalid_height;
+        errDiv.style.display = 'block';
+      } else {
+        txtInput.classList.remove('error');
+        errDiv.style.display = 'none';
+      }
+    }
+
+    function clearError() {
+      showError(false);
+    }
+
+    // Conversion helper
+    function convertWeight(kgVal) {
+      if (state.weightUnit === 'lbs') {
+        return kgVal * 2.20462;
+      }
+      return kgVal;
+    }
+
+    // Mathematical calculations
+    function calculateAndRender() {
+      const heightInMeters = state.height / 100;
+      const heightSquared = heightInMeters * heightInMeters;
+      const dict = translations[state.language];
+      const currentUnitLabel = dict[state.weightUnit];
+
+      // Update titles with unit suffix
+      document.getElementById('lbl_vis_asia').innerText = `${dict.lbl_vis_asia} (${currentUnitLabel})`;
+      document.getElementById('lbl_vis_who').innerText = `${dict.lbl_vis_who} (${currentUnitLabel})`;
+
+      // 1. Ideal Body Weight (Devine Formula 1974)
+      const heightInInches = state.height / 2.54;
+      const inchesOver60 = heightInInches - 60;
+      
+      let ibwKg = 0;
+      let isEdgeCase = false;
+      
+      if (inchesOver60 < 0) {
+        // Height under 5 feet, cap at base weights
+        ibwKg = state.gender === 'male' ? 50.0 : 45.5;
+        isEdgeCase = true;
+      } else {
+        const factor = state.gender === 'male' ? 50.0 : 45.5;
+        ibwKg = factor + (2.3 * inchesOver60);
+      }
+      
+      const ibwDisplay = convertWeight(ibwKg);
+      document.getElementById('val_card_ideal').innerHTML = `${ibwDisplay.toFixed(1)} <span>${currentUnitLabel}</span>`;
+      document.getElementById('desc_card_ideal').innerText = isEdgeCase ? dict.desc_ibw_edge : dict.desc_card_ideal;
+
+      // 2. Recommended Waist Circumference calculation
+      const maxWaistLimit = state.gender === 'male' ? 90 : 80;
+      const calculatedWaist = state.height / 2;
+      const recommendedWaistCm = Math.min(calculatedWaist, maxWaistLimit);
+      const recommendedWaistInches = (recommendedWaistCm / 2.54).toFixed(1);
+      
+      document.getElementById('val_card_waist').innerHTML = `
+        ${dict.txt_not_exceed} ${recommendedWaistCm.toFixed(0)} <span>cm</span> 
+        <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-secondary);">(${recommendedWaistInches} ${dict.txt_inches})</span>
+      `;
+
+      // 3. Weight range limits based on BMI bounds (in kg)
+      const w18_5_kg = 18.5 * heightSquared;
+      const w22_9_kg = 22.9 * heightSquared;
+      const w23_0_kg = 23.0 * heightSquared;
+      const w24_9_kg = 24.9 * heightSquared;
+      const w25_0_kg = 25.0 * heightSquared;
+      const w29_9_kg = 29.9 * heightSquared;
+      const w30_0_kg = 30.0 * heightSquared;
+
+      // Convert to selected display unit
+      const u18_5 = convertWeight(w18_5_kg);
+      const u22_9 = convertWeight(w22_9_kg);
+      const u23_0 = convertWeight(w23_0_kg);
+      const u24_9 = convertWeight(w24_9_kg);
+      const u25_0 = convertWeight(w25_0_kg);
+      const u29_9 = convertWeight(w29_9_kg);
+      const u30_0 = convertWeight(w30_0_kg);
+
+      // Render weight texts into visual segments
+      // Asia Criteria
+      document.getElementById('val_asia_under').innerText = `< ${u18_5.toFixed(1)}`;
+      document.getElementById('val_asia_normal').innerText = `${u18_5.toFixed(1)} - ${u22_9.toFixed(1)}`;
+      document.getElementById('val_asia_over').innerText = `${u23_0.toFixed(1)} - ${u24_9.toFixed(1)}`;
+      document.getElementById('val_asia_obese').innerText = `\u2265 ${u25_0.toFixed(1)}`;
+
+      // WHO Criteria
+      document.getElementById('val_who_under').innerText = `< ${u18_5.toFixed(1)}`;
+      document.getElementById('val_who_normal').innerText = `${u18_5.toFixed(1)} - ${u24_9.toFixed(1)}`;
+      document.getElementById('val_who_over').innerText = `${u25_0.toFixed(1)} - ${u29_9.toFixed(1)}`;
+      document.getElementById('val_who_obese').innerText = `\u2265 ${u30_0.toFixed(1)}`;
+
+      // Adjust widths
+      document.getElementById('asia_under').style.width = '24%';
+      document.getElementById('asia_normal').style.width = '34%';
+      document.getElementById('asia_over').style.width = '22%';
+      document.getElementById('asia_obese').style.width = '20%';
+
+      document.getElementById('who_under').style.width = '24%';
+      document.getElementById('who_normal').style.width = '34%';
+      document.getElementById('who_over').style.width = '22%';
+      document.getElementById('who_obese').style.width = '20%';
+    }
+
+    // Run setup
+    init();
+  </script>
+</body>
+</html>
