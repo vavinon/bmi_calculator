@@ -15,6 +15,9 @@ void main() {
       // Devine: 50 + 2.3 * ((170/2.54) - 60) = 50 + 2.3 * 6.929 = 65.937 kg
       expect(result.idealBodyWeight.toStringAsFixed(1), '65.9');
       
+      // Asian Ideal Weight: 20.7 * 1.7^2 = 59.823 kg
+      expect(result.asianIdealBodyWeight.toStringAsFixed(1), '59.8');
+      
       // Waist: min(170/2, 90) = 85 cm
       expect(result.recommendedWaistCm, 85.0);
       expect(result.isEdgeCase, false);
@@ -25,6 +28,9 @@ void main() {
       
       // Devine: 45.5 + 2.3 * ((170/2.54) - 60) = 45.5 + 2.3 * 6.929 = 61.437 kg
       expect(result.idealBodyWeight.toStringAsFixed(1), '61.4');
+      
+      // Asian Ideal Weight: 20.7 * 1.7^2 = 59.823 kg
+      expect(result.asianIdealBodyWeight.toStringAsFixed(1), '59.8');
       
       // Waist: min(170/2, 80) = 80 cm
       expect(result.recommendedWaistCm, 80.0);

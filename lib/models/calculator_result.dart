@@ -22,12 +22,16 @@ class CalculatorResult {
   /// น้ำหนักสูงสุดสำหรับเกณฑ์ปกติเอเชีย (Asian Max Weight) ในหน่วยกิโลกรัม (kg)
   final double asianMaxWeight;
 
+  /// น้ำหนักตัวในอุดมคติของชาวเอเชีย (Asian Ideal Body Weight) ในหน่วยกิโลกรัม (kg)
+  final double asianIdealBodyWeight;
+
   /// สถานะกรณีขอบเขตส่วนสูงต่ำกว่า 5 ฟุต (152.4 cm)
   final bool isEdgeCase;
 
   /// คอนสตรัคเตอร์สำหรับสร้างออบเจกต์ผลลัพธ์
   const CalculatorResult({
     required this.idealBodyWeight,
+    required this.asianIdealBodyWeight,
     required this.recommendedWaistCm,
     required this.recommendedWaistInches,
     required this.whoMinWeight,

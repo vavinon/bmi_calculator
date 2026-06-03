@@ -480,14 +480,15 @@ class HomePage extends StatelessWidget {
           builder: (context, cardConstraints) {
             // ปรับขนาดการจัดวางการ์ดผลลัพธ์: เคียงข้างกันถ้ามีพื้นที่แนวราบเพียงพอ
             final bool isRowCards = cardConstraints.maxWidth >= 460.0;
-            final Widget idealCard = ResultCard(
-              label: localizations.translate('ideal_weight'),
+            
+            final Widget idealGlobalCard = ResultCard(
+              label: localizations.translate('ideal_weight_global'),
               valueWidget: RichText(
                 text: TextSpan(
                   text: idealWeightVal.toStringAsFixed(1),
                   style: TextStyle(
                     fontFamily: 'Outfit',
-                    fontSize: 28.0,
+                    fontSize: 26.0,
                     fontWeight: FontWeight.w800,
                     color: theme.textPrimary,
                   ),
@@ -495,7 +496,7 @@ class HomePage extends StatelessWidget {
                     TextSpan(
                       text: ' $weightUnitStr',
                       style: AppTheme.getTextStyle(
-                        fontSize: 14.0,
+                        fontSize: 13.0,
                         fontWeight: FontWeight.w500,
                         color: theme.textSecondary,
                         lang: localizations.locale,
@@ -509,6 +510,40 @@ class HomePage extends StatelessWidget {
                   : localizations.translate('formula_desc'),
               borderAccentColor: theme.accentColor,
               cardBgColor: theme.accentColor.withOpacity(0.04),
+              theme: theme,
+              localizations: localizations,
+            );
+
+            final double scale = viewModel.weightUnit == 'lbs' ? 2.20462 : 1.0;
+            final double asianIdealWeightVal = result.asianIdealBodyWeight * scale;
+
+            final Widget idealAsianCard = ResultCard(
+              label: localizations.translate('ideal_weight_asian'),
+              valueWidget: RichText(
+                text: TextSpan(
+                  text: asianIdealWeightVal.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 26.0,
+                    fontWeight: FontWeight.w800,
+                    color: theme.textPrimary,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: ' $weightUnitStr',
+                      style: AppTheme.getTextStyle(
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textSecondary,
+                        lang: localizations.locale,
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              description: localizations.translate('formula_asian_desc'),
+              borderAccentColor: theme.colorNormal,
+              cardBgColor: theme.colorNormal.withOpacity(0.04),
               theme: theme,
               localizations: localizations,
             );
@@ -550,25 +585,33 @@ class HomePage extends StatelessWidget {
                 ],
               ),
               description: localizations.translate('waist_circumference_desc'),
-              borderAccentColor: theme.colorNormal,
-              cardBgColor: theme.colorNormal.withOpacity(0.04),
+              borderAccentColor: const Color(0xFFA855F7),
+              cardBgColor: const Color(0xFFA855F7).withOpacity(0.04),
               theme: theme,
               localizations: localizations,
             );
 
             if (isRowCards) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              return Column(
                 children: [
-                  Expanded(child: idealCard),
-                  const SizedBox(width: 16.0),
-                  Expanded(child: waistCard),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: idealGlobalCard),
+                      const SizedBox(width: 16.0),
+                      Expanded(child: idealAsianCard),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  waistCard,
                 ],
               );
             } else {
               return Column(
                 children: [
-                  idealCard,
+                  idealGlobalCard,
+                  const SizedBox(height: 16.0),
+                  idealAsianCard,
                   const SizedBox(height: 16.0),
                   waistCard,
                 ],
