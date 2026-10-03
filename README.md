@@ -1,5 +1,7 @@
 # Ideal Weight Finder (เครื่องมือคำนวณน้ำหนักที่เหมาะสม)
 
+> 🌐 **ทดลองใช้งานออนไลน์ (Live Demo):** [https://vavinon.github.io/bmi_calculator/](https://vavinon.github.io/bmi_calculator/)
+
 แอปพลิเคชันเครื่องมือคำนวณน้ำหนักที่เหมาะสมและวิเคราะห์ผลลัพธ์เพื่อสุขภาวะที่ดี รองรับการใช้งานข้ามแพลตฟอร์ม (Cross-Platform) อย่างเต็มรูปแบบ พัฒนาขึ้นโดยใช้เฟรมเวิร์ก **Flutter (Dart)** ภายใต้สถาปัตยกรรม **MVVM (Model-View-ViewModel)**
 
 ---
